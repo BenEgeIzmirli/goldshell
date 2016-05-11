@@ -13,6 +13,7 @@ Token* newToken() {
 /* Creates a new Token object, initialized as specified. */
 Token* newTokenV(char* value) {
 
+    if ( !value ) return newToken();
     Token* ret = newToken();
     ret->value = myStrndup(value);
     return ret;
@@ -24,9 +25,6 @@ void printToken(Token* t) {
 
     printf("----- Token at %p -----\n",(void*)t);
     printf("| value:    %s\n",t->value);
-    printf("| verb:     %u\n",t->verb);
-    printf("| symbol:   %u\n",t->symbol);
-    printf("| argument: %u\n",t->argument);
     printf("| next:     %p\n",(void*)t->next);
     printf("| prev:     %p\n",(void*)t->prev);
     printf("----- END TOKEN -----\n");
@@ -34,8 +32,36 @@ void printToken(Token* t) {
 }
 
 
+/* Copies a Token into a new Token object. Returns a pointer to the new Token. */
+Token* copyToken(Token* t) {
+
+    Token* ret = newTokenV(t->value);
+    ret->next = t->next;
+    ret->prev = t->prev;
+    return ret;
+
+}
+
+/* Copies a Token Linked List, and returns a pointer to the head of the new list. */
+Token* copyTokenLL(Token* head) {
+
+    head = tokenHead(head);
+    Token* ret = newTokenV(head->value);
+    head = head->next;
+
+    while ( head ) {
+        ret = appendToken(ret,copyToken(head));
+        head = head->next;
+    }
+
+    return tokenHead(ret);
+
+}
+
+
 /* Appends the Token t to the end of the Token
- * Linked List starting with head.
+ * Linked List starting with head. Returns the head of
+ * the Linked List.
  */
 Token* appendToken(Token* head, Token* t) {
 
@@ -44,15 +70,32 @@ Token* appendToken(Token* head, Token* t) {
     t->prev = head;
     t->next = 0;
 
+    return tokenHead(t);
+
+}
+
+/* returns a pointer to the head of a Token Linked List */
+Token* tokenHead(Token* t) {
+
+    while ( t->prev ) t = t->prev;
     return t;
 
 }
+
+/* returns a pointer to the last element of a Token Linked List */
+Token* tokenTail(Token* t) {
+
+    while ( t->next ) t = t->next;
+    return t;
+
+}
+
 
 /* Inserts a Token t before the Token pointed to by after.
  * Returns the new head of the Token Linked List.
  * NOT YET TESTED.
  */
-Token* insertToken(Token* after, Token* t) {
+Token* insertBefore(Token* after, Token* t) {
 
     Token* left = after->prev;
     Token* right = after;
@@ -61,8 +104,41 @@ Token* insertToken(Token* after, Token* t) {
     t->next = right;
     right->prev = t;
 
-    while ( after->prev ) after = after->prev;
-    return after;
+    return tokenHead(after);
+
+}
+
+
+/* Inserts a Token t after the Token pointed to by before.
+ * Returns the new head of the Token Linked List.
+ * NOT YET TESTED.
+ */
+Token* insertAfter(Token* before, Token* t) {
+
+    Token* left = before;
+    Token* right = before->next;
+    if ( right ) right->prev = t;
+    t->prev = left;
+    t->next = right;
+    left->next = t;
+
+    return tokenHead(before);
+
+}
+
+/* removes a Token from the Linked List it's in. Returns the new head of the LL. */
+Token* removeToken(Token* t) {
+
+    Token* left = t->prev;
+    Token* right = t->next;
+    if ( left ) left->next = right;
+    if ( right ) right->prev = left;
+
+    freeToken(t);
+
+    if ( left ) return left;
+    if ( right ) return right;
+    return 0;
 
 }
 
@@ -77,6 +153,13 @@ void printTokenLL(Token* head) {
 
 }
 
+/* Frees allocated memory for a Token object. */
+void freeToken(Token* t) {
+
+    if ( t->value ) free(t->value);
+    free(t);
+
+}
 
 /* Frees allocated memory for a Token Linked List from the
  * start of the list.
@@ -88,8 +171,7 @@ void freeTokenLL(Token* head) {
     Token* next;
     while ( head ) {
         next = head->next;
-        free(head->value);
-        free(head);
+        freeToken(head);
         head = next;
     }
 

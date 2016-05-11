@@ -4,14 +4,24 @@
 typedef struct Token {
 
     char* value;
-    unsigned int verb:1;
-    unsigned int symbol:1;
-    unsigned int argument:1;
-    unsigned int precedence:5;
 
     struct Token* next;
     struct Token* prev;
 
 } Token;
+
+typedef struct STree {
+
+    struct Token* value;
+    int prec;
+
+    struct STree* next;
+    struct STree* prev;
+
+    struct STree* down;
+    struct STree* left;
+    struct STree* right;
+
+} STree;
 
 #endif

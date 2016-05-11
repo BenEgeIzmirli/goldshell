@@ -9,60 +9,59 @@
  */
 Token* strToToken(char* str) {
 
-    if ( strlen(str) <= 1 ) return newToken();
+    int strLength = (strlen(str)>MAX_LINE_LENGTH) ? MAX_LINE_LENGTH : strlen(str);
+    if ( strLength <= 1 ) return newToken();
 
+    // make a duplicate string, and replace all spaces with null bytes
     char* strTemp = myStrndup(str);
+    for ( char* c=strTemp ; *c ; c++ ) if ( isspace(*c) ) *c = '\0';
 
-    Token* head = newToken();
-    Token* cur = head;
-
-    int FSM = 0; // 0 = reading spaces ; 1 = reading a word
-    for ( char* c=strTemp ; *c ; c++ ) {
-        if ( isspace(*c) ) {
-            FSM = 0;
-            *c = '\0';
-            continue;
+    // go through duplicate string, and make a Token for each word
+    Token* cur = newToken();
+    char prevChar = 0;
+    for ( int i=0 ; i<strLength ; prevChar = strTemp[i++] ) {
+        if ( !prevChar && strTemp[i] ) {
+            if ( !cur->value ) cur->value = myStrndup(&strTemp[i]);
+            else cur = appendToken(cur,newTokenV(&strTemp[i]));
         }
-        if ( !FSM ) { // if previous character was a space
-            FSM = 1;
-            if ( cur->value ) cur = appendToken(cur,newToken());
-            cur->value = c;
-        }
-    }
-
-    if ( !head->value ) {
-        free(strTemp);
-        return head;
-    }
-
-    for ( Token* t=head ; t ; t = t->next ) {
-        t->value = myStrndup(t->value);
     }
 
     free(strTemp);
-
-    return head;
-
-}
-
-
-Token* symbolSplit(Token* head) {
-
-    while ( head ) {
-        if ( strlen(head->value) == 1 ){
-            head = head->next;
-            continue;
-        }
-        for ( char* c=head->value ; *c ; c++ ) {
-            
-        }
-    }
-
-    return newToken();
+    return tokenHead(cur);
 
 }
 
+/* Takes the given Token and analyzes whether it contains a
+ * symbol. If it does, will replace the Token object with
+ * Token objects corresponding to the text before the symbol,
+ * the symbol itself, and the text after the symbol respectively.
+ * Returns the first of the 2-3 replaced elements.
+ */
+Token* tokenSplit(Token* t) {
 
+    if ( -1 == containsSymbol(t->value) ) return t;
+
+    int len = strlen(t->value);
+    char strBefore[len];
+    char strSymbol[2];
+    char strAfter[len];
+    memset( strBefore, 0, len*sizeof(char) );
+    memset( strSymbol, 0, 2*sizeof(char) );
+    memset( strAfter, 0, len*sizeof(char) );
+
+    int ind = containsSymbol(t->value);
+    if ( ind ) strncpy(strBefore,t->value,ind);
+    strncpy(strSymbol,t->value+ind,1);
+    if ( ind < len-1 ) strncpy(strAfter,t->value+ind+1,len-ind-1);
+    if ( strlen(strAfter) ) insertAfter(t,newTokenV(strAfter));
+    insertAfter(t,newTokenV(strSymbol));
+    if ( strlen(strBefore) ) insertAfter(t,newTokenV(strBefore));
+    Token* ret = t->next;
+    removeToken(t);
+
+    return ret;
+
+}
 
 
 

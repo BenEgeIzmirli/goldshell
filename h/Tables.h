@@ -1,25 +1,19 @@
 #ifndef TABLES_H
 #define TABLES_H
-/*
-const char* _SYM0 = "'";
-const char* _SYM1 = "\\";
-const char* _SYM2 = "`";
-const char* _SYM3 = "\"";
-const char* _SYM4 = "()";
-const char* _SYM5 = "|><&";
-
-const char* _SYMBOLS[6] = {
-    _SYM0, _SYM1, _SYM2, _SYM3, _SYM4, _SYM5
-};
-*/
+// Ordered from highest to lowest precedence.
 const char* const _SYMBOLS[] = {
-    "'",
+    "''",
     "\\",
-    "`",
-    "\"",
-    "()",
+    "``",
+    "\"\"",
     "|><&"
 };
+
+// Specify whether each tier of _SYMBOLS consists of unary symbols or not.
+const int const _UNARY[] = { 0,1,0,0,1 };
+
 int evaluatePrecedence(char);
+int containsSymbol(char* str);
+int isUnary(char);
 
 #endif

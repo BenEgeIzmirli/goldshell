@@ -14,9 +14,18 @@ Token* Tokenize(char* str) {
 
     if ( !head->value ) return head;
 
-    //symbolSplit(head);
+    while ( 1 ) {
+        if ( strlen(head->value) <= 1 ){
+            if ( !head->next ) break;
+            head = head->next;
+            continue;
+        }
+        head = tokenSplit(head);
+        if ( !head->next ) break;
+        head = head->next;
+    }
 
-    return head;
+    return tokenHead(head);
 
 }
 
