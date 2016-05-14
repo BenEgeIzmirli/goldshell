@@ -12,6 +12,8 @@ Token* Tokenize(char* str) {
 
     Token* head = strToToken(str);
 
+    if ( ERROR_CODE ) return (Token*)0;
+
     if ( !head->value ) return head;
 
     while ( 1 ) {

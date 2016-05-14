@@ -4,24 +4,42 @@
 typedef struct Token {
 
     char* value;
+    unsigned int prec;
+    unsigned int symbol;
+    unsigned int leaf;
+    struct Process* proc;
+    struct Process* parent;
 
     struct Token* next;
     struct Token* prev;
 
+    struct Token* up;
+    struct Token* down;
+    struct Token* left;
+    struct Token* right;
+
 } Token;
 
-typedef struct STree {
+typedef struct Process {
 
-    struct Token* value;
-    int prec;
+    pid_t pid;
+    struct Token* command;
+    int fd[2];
+    char* args[128];
+    int left,right;
+    int chdirpipe;
 
-    struct STree* next;
-    struct STree* prev;
+    struct Token* parent;
+    struct Token* children;
 
-    struct STree* down;
-    struct STree* left;
-    struct STree* right;
+} Process;
 
-} STree;
+typedef struct Arguments {
+
+    int argct;
+    char* args[128];
+
+} Arguments;
+
 
 #endif

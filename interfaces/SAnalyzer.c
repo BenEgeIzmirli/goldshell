@@ -1,12 +1,21 @@
 #include "../h/std.h"
 #include "../c/SAnalyzer.c"
 
-STree* constructSTree(Token* head) {
+Token* constructSTree(Token* head) {
 
-    STree* copy = tokenToSTree(head);
+    if ( !head ) return newToken();
+    if ( !head->value ) return head;
+    Token* copy = copyTokenLL(head);
+    setPrecedences(copy);
+    copy = refactorTier(copy);
 
-    printSTreeLL(copy);
-    freeSTreeLL(copy);
+    if ( ERROR_CODE ) {
+        freeTokenLL(copy);
+        return (Token*)0;
+    }
 
+    freeTokenLL(head);
+    setTreeSymbols(copy);
+    return tokenHead(copy);
 }
 

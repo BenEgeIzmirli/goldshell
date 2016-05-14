@@ -13,8 +13,31 @@ Token* strToToken(char* str) {
     if ( strLength <= 1 ) return newToken();
 
     // make a duplicate string, and replace all spaces with null bytes
+    // iff it's not inside a quote
+    int FSM = 0; // 0=not in quote, 1=inside single quote, 2=inside double quote
     char* strTemp = myStrndup(str);
-    for ( char* c=strTemp ; *c ; c++ ) if ( isspace(*c) ) *c = '\0';
+    for ( char* c=strTemp ; *c ; c++ ) {
+        switch ( *c ) {
+            case '\'' :
+                if ( 2 == FSM ) break;
+                FSM = (FSM) ? 0 : 1 ;
+                //*c = '\0';
+                break;
+            case '"'  :
+                if ( 1 == FSM ) break;
+                FSM = (FSM) ? 0 : 2 ;
+                //*c = '\0';
+                break;
+        }
+        if ( !FSM && isspace(*c) ) *c = '\0';
+    }
+    if ( FSM ) {
+        Token* t = ( 1 == FSM ) ? newTokenV("'") : newTokenV("\"") ;
+        ERROR_NO_MATCHING_SYMBOL(t);
+        freeToken(t);
+        free(strTemp);
+        return (Token*)0;
+    }
 
     // go through duplicate string, and make a Token for each word
     Token* cur = newToken();

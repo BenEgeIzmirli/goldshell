@@ -1,0 +1,25 @@
+Ben Ege Izmirli
+
+All portions of the shell are complete, including all extra credit.
+
+The input portion of my shell is based on a compiler, where the input line is tokenized and turned into a parse tree. The rest of the program, including the forking etc, is recursive. The symbol detection is done using a symbol table; as a result, it will do two kinds of parsing, both binary (pipes etc) and quote-y, including parentheses. All of these are put into the parse tree ordered by precedence, where escape slashes have the highest precedence, followed by graves, then single quotes, etc. I have removed this functionality before handing in the lab.
+
+The program is designed such that there should be no memory leaks at all. All errors percolate up to the main() loop, where they are handled appropriately.
+
+Because of the recursive design of the forking system, any number of pipes up to the maximum line length or the maximum recursion limit should work without problems.
+
+I have handled both the SIGINT and SIGTSTP signals. The SIGINT is captured and kills the current subprocess instead of the shell, and the SIGTSTP signal backgrounds the current running process.
+
+To do this lab I used Stack Overflow when I ran into errors I could not solve myself. Usually I just skimmed the answers to see some sample code, but a few pages were very useful to me in particular:
+
+Reference for signals:
+http://www.thegeekstuff.com/2012/03/catch-signals-sample-c-code/
+
+Reference for duping:
+http://stackoverflow.com/questions/4832603/how-could-i-temporary-redirect-stdout-to-a-file-in-a-c-program
+
+Reference for forking:
+http://www6.uniovi.es/cscene/CS4/CS4-06.html
+
+I affirm that I adhered to the Honor Code in this assignment.
+Ben Ege Izmirli

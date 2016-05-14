@@ -6,6 +6,7 @@ Token* newToken() {
 
     Token* ret = (Token*) safe_malloc(sizeof(Token));
     memset(ret, 0, sizeof(Token));
+    ret->prec = -1;
     return ret;
 
 }
@@ -23,11 +24,96 @@ Token* newTokenV(char* value) {
 /* Prints a Token object and all its relevant information. */
 void printToken(Token* t) {
 
-    printf("----- Token at %p -----\n",(void*)t);
-    printf("| value:    %s\n",t->value);
-    printf("| next:     %p\n",(void*)t->next);
-    printf("| prev:     %p\n",(void*)t->prev);
-    printf("----- END TOKEN -----\n");
+    printTokenPrepend(t,"");
+
+}
+
+/* Prints a Token object, prepending the given string to each line. */
+void printTokenPrepend(Token* t, char* p) {
+
+    printf("%s----- Token at %p -----\n",p,(void*)t);
+    printf("%s| value:      %s\n",p,t->value);
+    printf("%s| precedence: %d\n",p,t->prec);
+    printf("%s| symbol:     %d\n",p,t->symbol);
+    printf("%s| leaf:       %d\n",p,t->leaf);
+    printf("%s| next:       %p\n",p,(void*)t->next);
+    printf("%s| prev:       %p\n",p,(void*)t->prev);
+    printf("%s| up:         %p\n",p,(void*)t->up);
+    printf("%s| down:       %p\n",p,(void*)t->down);
+    printf("%s| left:       %p\n",p,(void*)t->left);
+    printf("%s| right:      %p\n",p,(void*)t->right);
+    printf("%s----- END TOKEN -----\n",p);
+
+}
+
+void printTokenLite(Token* t, char* p) {
+
+    printf("%sTOKEN:%s\n",p,t->value);
+
+}
+
+void printTokenValues(Token* head) {
+
+    printTokenValues_helper(head, 0);
+
+}
+
+void printTokenValues_helper(Token* head, int prepend) {
+
+    while ( head->prev ) head = head->prev;
+    char p[3*prepend+1];
+    memset(p,' ',3*prepend);
+    p[3*prepend] = 0;
+    while ( head ) {
+        printTokenLite(head,p);
+        if ( head->down ) {
+            printf("%sDOWN:\n",p);
+            printTokenValues_helper(head->down,prepend+1);
+        }
+        if ( head->left ) {
+            printf("%sLEFT:\n",p);
+            printTokenValues_helper(head->left,prepend+1);
+        }
+        if ( head->right ) {
+            printf("%sRIGHT:\n",p);
+            printTokenValues_helper(head->right,prepend+1);
+        }
+        head = head->next;
+    }
+
+}
+
+
+/* Prints a Linked List of Tokens from the start of the list. */
+void printTokenLL(Token* head) {
+
+    printTokenLL_helper(head, 0);
+
+}
+
+void printTokenLL_helper(Token* head, int prepend) {
+ 
+    if ( !head ) return;
+    while ( head->prev ) head = head->prev;
+    char p[3*prepend+1];
+    memset(p,' ',3*prepend);
+    p[3*prepend] = 0;
+    while ( head ) {
+        printTokenPrepend(head,p);
+        if ( head->down ) {
+            printf("%sDOWN:\n",p);
+            printTokenLL_helper(head->down,prepend+1);
+        }
+        if ( head->left ) {
+            printf("%sLEFT:\n",p);
+            printTokenLL_helper(head->left,prepend+1);
+        }
+        if ( head->right ) {
+            printf("%sRIGHT:\n",p);
+            printTokenLL_helper(head->right,prepend+1);
+        }
+        head = head->next;
+    }
 
 }
 
@@ -36,6 +122,7 @@ void printToken(Token* t) {
 Token* copyToken(Token* t) {
 
     Token* ret = newTokenV(t->value);
+    ret->symbol = t->symbol;
     ret->next = t->next;
     ret->prev = t->prev;
     return ret;
@@ -55,6 +142,30 @@ Token* copyTokenLL(Token* head) {
     }
 
     return tokenHead(ret);
+
+}
+
+Token* copyTokenTree(Token* head) {
+
+    if ( !head ) return (Token*)0;
+    Token* copyHead = copyTokenLL(head);
+    Token* copyCur = copyHead;
+    Token* headCur = head;
+    while ( copyCur && headCur ) {
+        copyCur->prec = headCur->prec;
+        copyCur->symbol = headCur->symbol;
+        copyCur->leaf = headCur->leaf;
+        copyCur->down  = copyTokenTree(headCur->down );
+        if ( copyCur->down ) copyCur->down->up = copyCur;
+        copyCur->left  = copyTokenTree(headCur->left );
+        if ( copyCur->left ) copyCur->left->up = copyCur;
+        copyCur->right = copyTokenTree(headCur->right);
+        if ( copyCur->right ) copyCur->right->up = copyCur;
+        copyCur = copyCur->next;
+        headCur = headCur->next;
+    }
+
+    return copyHead;
 
 }
 
@@ -126,6 +237,46 @@ Token* insertAfter(Token* before, Token* t) {
 
 }
 
+/* Splits a Token Linked List right before the node specified.
+ * Returns a pointer to the head of the second list.
+ */
+Token* splitBefore(Token* t) {
+
+    if ( !t->prev ) return t;
+    t->prev->next = 0;
+    t->prev = 0;
+    return t;
+
+}
+
+/* Splits a Token Linked List right after the node specified.
+ * Returns a pointer to the head of the second list.
+ */
+Token* splitAfter(Token* t) {
+
+    if ( !t->next ) return 0;
+    Token* temp = t->next;
+    t->next->prev = 0;
+    t->next = 0;
+    return temp;
+
+}
+
+/* Appends one Token Linked List to the end of another.
+ * Returns the head of the new list.
+ */
+Token* appendTokenLL(Token* dest, Token* src) {
+
+    if ( !src ) return dest;
+    if ( !dest ) return src;
+    Token* destTail = tokenTail(dest);
+    destTail->next = src;
+    src->prev = destTail;
+    return tokenHead(src);
+
+}
+
+
 /* removes a Token from the Linked List it's in. Returns the new head of the LL. */
 Token* removeToken(Token* t) {
 
@@ -136,44 +287,67 @@ Token* removeToken(Token* t) {
 
     freeToken(t);
 
-    if ( left ) return left;
-    if ( right ) return right;
-    return 0;
+    if ( left ) return tokenHead(left);
+    if ( right ) return tokenHead(right);
+    return (Token*)0;
 
 }
 
-/* Prints a Linked List of Tokens from the start of the list. */
-void printTokenLL(Token* head) {
+Token* removeTokenNotCommand(Token* t) {
 
-    while ( head->prev ) head = head->prev;
-    while ( head ) {
-        printToken(head);
-        head = head->next;
-    }
+    Token* left = t->prev;
+    Token* right = t->next;
+    if ( left ) left->next = right;
+    if ( right ) right->prev = left;
+
+    freeTokenNotCommand(t);
+
+    if ( left ) return tokenHead(left);
+    if ( right ) return tokenHead(right);
+    return (Token*)0;
+
+}
+
+
+void freeTokenNotCommand(Token* t) {
+
+    if ( !t ) return;
+    if ( t->value ) free(t->value);
+    if ( t->proc ) freeProcessNotCommand(t->proc);
+    free(t);
 
 }
 
 /* Frees allocated memory for a Token object. */
 void freeToken(Token* t) {
 
+    if ( !t ) return;
     if ( t->value ) free(t->value);
+    if ( t->proc ) freeProcess(t->proc);
     free(t);
 
 }
 
 /* Frees allocated memory for a Token Linked List from the
- * start of the list.
+ * start of the list. Returns a null Token pointer.
  */
 void freeTokenLL(Token* head) {
+
+    if ( !head ) return;
 
     while ( head->prev ) head = head->prev;
 
     Token* next;
     while ( head ) {
         next = head->next;
+        if ( head->down ) freeTokenLL(head->down);
+        if ( head->left ) freeTokenLL(head->left);
+        if ( head->right ) freeTokenLL(head->right);
         freeToken(head);
         head = next;
     }
+
+    return ;
 
 }
 
